@@ -1,109 +1,100 @@
 import React, { Component } from 'react';
-import $ from "jquery";
-// import linkState from 'linkstate';
-import cn from 'classnames';
-// import DebounceInput from 'react-debounce-input';
-// import Pace from 'react-pace-progress'
+import { observer } from 'mobx-react';
+// import cn from 'classnames';
+import _ from 'lodash';
+import { InputGroup, InputGroupButton, Input, Button } from 'reactstrap';
+import { MdCancel } from 'react-icons/lib/md';
+import Select from 'react-select';
 
+import countries from './countries';
 import Result from './result';
 
+import 'react-select/dist/react-select.css';
 import './app.scss';
 
+@observer
 class App extends Component {
-  state = {
-    initialized: false,
-    results: undefined,
-    searchText: '',
-    isLoading: false
-  };
-
-  runSearch() {
-    let term = this.state.searchText;
-    this.setState({ isLoading: true });
-
-    $.getJSON('https://itunes.apple.com/search?callback=?', {
-      entity: 'album',
-      term: term,
-      // country: 'my',
-      // limit: 5,
-      explicit: 'Y'
-    })
-    .done(data => {
-      data.results.forEach(result => {
-        result.artworks = {
-          s:  result.artworkUrl60,
-          m:  result.artworkUrl100,
-          l:  result.artworkUrl100,
-          xl: result.artworkUrl100
-        };
-        result.artworks.l  = result.artworkUrl100.replace('100x100', '600x600');
-        result.artworks.xl = result.artworkUrl100.replace('100x100bb', '100000x100000-999');
-        let url = new URL(result.artworks.xl)
-    		result.artworks.xl = 'http://is5.mzstatic.com' + url.pathname;
-      });
-
-      this.setState({ results: data.results });
-      this.setState({ isLoading: false });
-      !this.state.initialized && this.setState({ initialized: true });
-    })
-    .fail(function(err) {
-      console.log('Fetch Error :-S', err);
-      this.setState({ isLoading: false });
-    });
+  constructor(props) {
+    super(props);
+    this.store = this.props.store;
   }
+
 
   _handleKeyPress(e) {
     if (e.key === 'Enter') {
-      this.runSearch()
-      // console.log('do validate');
+      this.store.runSearch();
     }
   }
 
+  _changeCountry(val) {
+    this.store.searchCountry = val.value;
+    this.store.runSearch();
+  }
+
+  _searchCancel() {
+    this.store.reset();
+  }
+
   componentDidMount() {
-    $('.search-box').focus()
-    this.runSearch();
+    // $('.search-box').focus()
+    this.store.runSearch();
+  }
+
+  _renderSearchBar() {
+    const optionCountries = _.map(countries, (name, code) => {
+      return { value: code, label: name };
+    });
+
+    return (
+      <div className='container py-3'>
+        <section className='search-bar'>
+          <InputGroup className="search-box">
+            <Input
+              value={this.store.searchText}
+              onChange={e => { this.store.searchText = e.target.value }}
+              onKeyPress={this._handleKeyPress.bind(this)}
+              placeholder="Search Albums" />
+            <InputGroupButton hidden={this.store.searchText.length === 0}>
+              <Button onClick={this._searchCancel.bind(this)}><MdCancel size={30} /></Button>
+            </InputGroupButton>
+          </InputGroup>
+          <Select
+            name='country'
+            placeholder='Country'
+            value={this.store.searchCountry}
+            options={optionCountries}
+            onChange={this._changeCountry.bind(this)} />
+
+          {/* <span className={cn('search-help', { show: this.store.searchText.length > 0 })}>
+            Press enter to search.{' '}
+            {!hasResults && <span className='no-result'>No result. Try another keyword.</span>}
+          </span> */}
+        </section>
+      </div>
+    );
   }
 
   render() {
-    const { results } = this.state;
-
-    let hasResults = results !== undefined && results.length > 0
+    // const results = this.store.results;
+    const results = this.store.sortedResults;
+    const hasResults = results.length > 0;
 
     return (
-      <div className="container py-3">
-        {/* {this.state.isLoading && <Pace color="#27ae60"/>} */}
-        <section className="search-bar">
-          {/* <DebounceInput
-            className="search-box"
-            minLength={2}
-            debounceTimeout={500}
-            value={this.state.searchText}
-            onChange={e => {
-              this.setState({ searchText: e.target.value });
-              this.runSearch();
-            }}
-            placeholder="Search Albums" /> */}
-
-          <input
-            className="search-box"
-            value={this.state.searchText}
-            onChange={e => { this.setState({ searchText: e.target.value })}}
-            onKeyPress={this._handleKeyPress.bind(this)}
-            placeholder="Search Albums" />
-
-          <span className={cn('search-help', { show: this.state.searchText.length > 0 })}>
-            Press enter to search.{' '}
-            {!hasResults && <span className="no-result">No result. Try another keyword.</span>}
-          </span>
-        </section>
-
-        <section className="results">
-          {hasResults &&
-            results.map(result =>
-              <Result result={result} key={result.collectionId} />
-            )
-          }
-        </section>
+      <div>
+        {this._renderSearchBar()}
+        <div className='container py-3'>
+          <section className='results'>
+            {hasResults ? (
+              results.map(result =>
+                <Result result={result} key={result.collectionId} />
+              )
+            ) : (
+              <div className="no-result">
+                No results.
+              </div>
+            )}
+          </section>
+        </div>
       </div>
     );
   }

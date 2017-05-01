@@ -1,0 +1,97 @@
+@import '~bootstrap/scss/_variables';
+
+.search-bar {
+  margin-bottom: 3em;
+
+  .search-box {
+    position: relative;
+    font-size: 2em;
+    font-weight: 300;
+    width: 100%;
+    border: 3px solid #ddd;
+    border-radius: 5px;
+    padding: .35em .75em;
+    outline: none;
+    z-index: 10;
+
+    &:focus {
+      border-color: #aaa;
+    }
+  }
+
+  .search-help {
+    position: relative;
+    display: block;
+    color: #aaa;
+    opacity: 0;
+    transform: translateY(-100%);
+    z-index: 0;
+    padding: .5em 1em;
+    transition: all .3s ease;
+
+    &.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+.results {
+  .row {
+    margin-bottom: 2em;
+
+    .meta {
+      text-align: right;
+      padding-top: 2em;
+
+      h1 {
+        font-family: Montserrat, $font-family-sans-serif;
+        font-weight: 700;
+        font-size: 1.3em;
+        letter-spacing: .3em;
+        text-transform: uppercase;
+        margin-right: -.3em;
+      }
+
+      h4 {
+        opacity: .5;
+        font-size: 2.5em;
+        font-weight: 300;
+        line-height: .8;
+        margin-bottom: 1em;
+      }
+
+      a.btn {
+        margin-bottom: .5em;
+      }
+    }
+
+    .image {
+      img {
+        // border: 3px solid #444;
+        border-radius: 5px;
+        box-shadow: 0 30px 70px rgba(#000, .3);
+        max-width: 100%;
+      }
+    }
+  }
+}
+
+
+.fade-appear {
+  opacity: 0.01;
+}
+
+.fade-appear.fade-appear-active {
+  opacity: 1;
+  transition: opacity .5s ease;
+}
+
+.fade-leave {
+  opacity: 1;
+}
+
+.fade-leave.fade-leave-active {
+  opacity: 0.01;
+  transition: opacity .5s ease;
+}

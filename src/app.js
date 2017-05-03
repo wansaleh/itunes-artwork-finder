@@ -1,103 +1,127 @@
-import React, { Component } from 'react';
-import { observer } from 'mobx-react';
-// import cn from 'classnames';
-import _ from 'lodash';
-import { InputGroup, InputGroupButton, Input, Button } from 'reactstrap';
-import { MdCancel } from 'react-icons/lib/md';
-import Select from 'react-select';
+import React, { Component } from 'react'
+import { inject, observer } from 'mobx-react'
+import { Route, Link } from 'react-router-dom'
+import { withRouter } from 'react-router'
 
-import countries from './countries';
-import Result from './result';
+import classnames from 'classnames'
+import { InputGroup, InputGroupAddon, Input, Button } from 'reactstrap'
+import { MdCancel } from 'react-icons/lib/md'
+import Select from 'react-select'
+import MDSpinner from "react-md-spinner"
 
-import 'react-select/dist/react-select.css';
-import './app.scss';
+import countries from './countries'
+import Results from './results'
 
+@inject('router', 'main')
+class Home extends Component {
+  constructor(props) {
+		super(props)
+		this.store = this.props.main
+	}
+
+  componentDidMount() {
+    this.store.resetSearch()
+  }
+
+  render() {
+    return null
+  }
+}
+
+@inject('router', 'main')
+@withRouter
 @observer
 class App extends Component {
   constructor(props) {
-    super(props);
-    this.store = this.props.store;
-  }
+		super(props)
+		this.store = this.props.main
+	}
 
-
-  _handleKeyPress(e) {
+  _handleKey(e) {
     if (e.key === 'Enter') {
-      this.store.runSearch();
+      this.props.router.push(`/${this.store.searchCountry}/${this.store.searchTerm}`)
+      this.store.runSearch()
+    }
+    if (e.key === 'Escape') {
+      this.store.resetSearch()
     }
   }
 
   _changeCountry(val) {
-    this.store.searchCountry = val.value;
-    this.store.runSearch();
+    this.store.searchCountry = val.value
+    this.props.router.push(`/${this.store.searchCountry}/${this.store.searchTerm}`)
+    this.store.runSearch()
   }
 
   _searchCancel() {
-    this.store.reset();
+    this.store.resetSearch()
   }
 
   componentDidMount() {
     // $('.search-box').focus()
-    this.store.runSearch();
+    this.store.runSearch()
   }
 
   _renderSearchBar() {
-    const optionCountries = _.map(countries, (name, code) => {
-      return { value: code, label: name };
-    });
-
     return (
-      <div className='container py-3'>
-        <section className='search-bar'>
-          <InputGroup className="search-box">
-            <Input
-              value={this.store.searchText}
-              onChange={e => { this.store.searchText = e.target.value }}
-              onKeyPress={this._handleKeyPress.bind(this)}
-              placeholder="Search Albums" />
-            <InputGroupButton hidden={this.store.searchText.length === 0}>
-              <Button onClick={this._searchCancel.bind(this)}><MdCancel size={30} /></Button>
-            </InputGroupButton>
-          </InputGroup>
-          <Select
-            name='country'
-            placeholder='Country'
-            value={this.store.searchCountry}
-            options={optionCountries}
-            onChange={this._changeCountry.bind(this)} />
+      <div className={classnames('container py-3 header', {'has-results': this.store.hasResults})}>
+        <div className="row">
+          <div className="col-md-5 left">
+            <h1 className="app-title">
+              <Link to="/">
+                iTunes<br />Artworks<br />Finder
+              </Link>
+            </h1>
+          </div>
 
-          {/* <span className={cn('search-help', { show: this.store.searchText.length > 0 })}>
-            Press enter to search.{' '}
-            {!hasResults && <span className='no-result'>No result. Try another keyword.</span>}
-          </span> */}
-        </section>
+          <div className="col-md-7 right">
+            <div className='search-bar'>
+              <InputGroup className="search-box">
+                <Input
+                  value={this.store.searchTerm}
+                  onChange={e => { this.store.searchTerm = e.target.value }}
+                  onKeyDown={this._handleKey.bind(this)}
+                  placeholder="Search Albums" />
+                <InputGroupAddon hidden={this.store.searchTerm.length === 0}>
+                  <MDSpinner
+                    className={classnames('spinner', {show: this.store.isLoading})}
+                    size={26}
+                    hidden={!this.store.isLoading} />
+                  <Button
+                    className={classnames('cancel', {show: !this.store.isLoading})}
+                    onClick={this._searchCancel.bind(this)}>
+                    <MdCancel size={30} />
+                  </Button>
+                </InputGroupAddon>
+              </InputGroup>
+
+              <Select
+                name='country'
+                placeholder='Country'
+                value={this.store.searchCountry}
+                options={countries}
+                onChange={this._changeCountry.bind(this)} />
+
+              {/* <span className={cn('search-help', { show: this.store.searchTerm.length > 0 })}>
+                Press enter to search.{' '}
+                {!hasResults && <span className='no-result'>No result. Try another keyword.</span>}
+              </span> */}
+            </div>
+          </div>
+        </div>
       </div>
-    );
+    )
   }
 
   render() {
-    // const results = this.store.results;
-    const results = this.store.sortedResults;
-    const hasResults = results.length > 0;
-
     return (
       <div>
         {this._renderSearchBar()}
-        <div className='container py-3'>
-          <section className='results'>
-            {hasResults ? (
-              results.map(result =>
-                <Result result={result} key={result.collectionId} />
-              )
-            ) : (
-              <div className="no-result">
-                No results.
-              </div>
-            )}
-          </section>
-        </div>
+        <Route exact path="/" component={Home} />
+        <Route exact path="/:country/:term" component={Results} />
       </div>
-    );
+    )
   }
 }
 
-export default App;
+export default App

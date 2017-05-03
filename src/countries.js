@@ -1,4 +1,6 @@
-const countries = {
+import { map } from 'lodash';
+
+let countries = {
   ae: 'United Arab Emirates',
   ag: 'Antigua and Barbuda',
   ai: 'Anguilla',
@@ -155,5 +157,9 @@ const countries = {
   za: 'South Africa',
   zw: 'Zimbabwe'
 };
+
+countries = map(countries, (name, code) => {
+  return { value: code, label: name };
+});
 
 export default countries;
